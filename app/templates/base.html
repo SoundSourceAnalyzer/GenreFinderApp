@@ -22,7 +22,6 @@
     <!-- Plugin CSS -->
     <link rel="stylesheet" href="../static/vendor/font-awesome/css/font-awesome.min.css">
     <link rel="stylesheet" href="../static/vendor/simple-line-icons/css/simple-line-icons.css">
-    <link rel="stylesheet" href="../static/vendor/device-mockups/device-mockups.min.css">
 
     <!-- Theme CSS -->
     <link href="../static/css/new-age.min.css" rel="stylesheet">
@@ -48,7 +47,7 @@
                 <span class="sr-only">Toggle navigation</span> Menu <i class="fa fa-bars"></i>
             </button>
             <span class="navbar-brand">
-                Server status:
+                <a href="{{ url_for('index') }}">Server status:</a>
                 <span class="label label-success">
                 Online
                 </span>
@@ -74,31 +73,13 @@
     <!-- /.container-fluid -->
 </nav>
 
-<header>
-    <div class="container">
-        <div class="row">
-            <div class="col-sm-12">
-                <div class="header-content">
-                    <div class="header-content-inner inline">
-                        <h1>Paste a youtube url or upload a file to check the genre</h1>
-                        <form class="" role="form" method="post" target="">
-                            <div class="form-group">
-                                <div class="col-md-8 search-bar">
-                                    <input title="url" type="text" name="url" class="form-control"/>
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="btn btn-outline" for="upload-photo">Browse</label>
-                                    <button class="btn btn-outline" type="submit">Classify</button>
-                                    <input type="file" name="photo" id="upload-photo" />
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</header>
+
+
+
+
+{% block content %}
+
+{% endblock %}
 
 <section id="about" class="about">
     <div class="container">
@@ -187,6 +168,8 @@
 <!-- jQuery -->
 <script src="../static/vendor/jquery/jquery.min.js"></script>
 
+<script src="http://malsup.github.com/jquery.form.js"></script>
+
 <!-- Bootstrap Core JavaScript -->
 <script src="../static/vendor/bootstrap/js/bootstrap.min.js"></script>
 
@@ -195,6 +178,10 @@
 
 <!-- Theme JavaScript -->
 <script src="../static/js/new-age.min.js"></script>
+
+{% block javascript %}
+
+{% endblock %}
 
 </body>
 

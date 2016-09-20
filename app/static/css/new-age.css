@@ -24,6 +24,18 @@ body {
 body {
   font-family: 'Muli', 'Helvetica', 'Arial', 'sans-serif';
 }
+#messages {
+  margin-top: 10px;
+}
+#messages > ul > li {
+  list-style-type: none;
+  font-size: 15px;
+}
+#upload-song {
+  opacity: 0;
+  position: absolute;
+  z-index: -1;
+}
 a {
   -webkit-transition: all 0.35s;
   -moz-transition: all 0.35s;
@@ -60,15 +72,6 @@ p {
 }
 .search-bar {
   margin-bottom: 10px;
-}
-label {
-  pointer: cursor;
-  /* Style as you please, it will become the visible UI component. */
-}
-#upload-photo {
-  opacity: 0;
-  position: absolute;
-  z-index: -1;
 }
 .navbar-default {
   background-color: white;
@@ -174,6 +177,7 @@ header .header-content {
   position: relative;
 }
 header .header-content .header-content-inner {
+  display: inline-block;
   position: relative;
   max-width: 500px;
   margin: 0 auto;
@@ -202,14 +206,14 @@ header .device-container .screen img {
     min-height: 100%;
   }
   header .header-content {
-    text-align: left;
+    text-align: center;
     padding: 0;
     height: 100vh;
   }
   header .header-content .header-content-inner {
-    max-width: none;
-    margin: 0;
-    position: absolute;
+    display: inline-block;
+    position: relative;
+    margin: 0 auto;
     top: 50%;
     transform: translateY(-50%);
   }
