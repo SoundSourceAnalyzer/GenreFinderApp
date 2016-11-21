@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <header>
+        <div class="container">
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="header-content">
+                        <div class="header-content-inner inline" id="main-content">
+                            <h1>Upload a sound file to check the genre</h1>
+                            <form id="classify-form" enctype="multipart/form-data" role="form" method="post"
+                                  action="{{ url_for('index') }}">
+                                {{ form.hidden_tag() }}
+                                <span>
+                                    <label class="btn btn-outline"
+                                           for="upload-song">Choose a file to classify</label>
+                                    <input type="file" name="file" id="upload-song"/>
+                                </span>
+                            </form>
+                            {% with messages = get_flashed_messages() %}
+                                {% if messages %}
+                                    <div id="messages">
+                                        <ul>
+                                            {% for message in messages %}
+                                                <li class="label label-danger">{{ message }} </li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                {% endif %}
+                            {% endwith %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+{% endblock %}
+
+{% block javascript %}
+    <script type="application/javascript">
+
+        document.getElementById("upload-song").onchange = function () {
+            document.getElementById("classify-form").submit();
+        };
+
+
+    </script>
+{% endblock %}
