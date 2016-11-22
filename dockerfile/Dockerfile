@@ -1,7 +1,7 @@
 FROM monsantoco/min-jessie:latest
 MAINTAINER humblehound "lukmyslinski@gmail.com"
 RUN apt-get update -y
-RUN apt-get install -y python-pip python-dev python-matplotlib build-essential liblapack-dev curl gfortran -y
+RUN apt-get install -y python-pip python-dev python-matplotlib build-essential liblapack-dev curl gfortran default-jre -y
 RUN curl -sL https://deb.nodesource.com/setup_4.x | bash -
 RUN apt-get install -y nodejs
 COPY requirements.txt /

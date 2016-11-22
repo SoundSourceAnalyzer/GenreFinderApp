@@ -1,19 +1,70 @@
 from __future__ import print_function
-import os
-import matplotlib.pyplot as plt
 import numpy as np
-from sklearn import preprocessing
-import sys
-import tarfile
-from IPython.display import display, Image
-from scipy import ndimage
-from sklearn.linear_model import LogisticRegression
-from six.moves.urllib.request import urlretrieve
-from six.moves import cPickle as pickle
-from six.moves import range
+import pickle
 import tensorflow as tf
 
-with open('data/gztan.pickle', 'rb') as f:
+
+def one_hot_encoder(pos, max):
+    encoded = []
+    for i in range(0, max):
+        if i == pos:
+            encoded.append(1)
+        else:
+            encoded.append(0)
+    return encoded
+
+
+def reformat(dataset, labels):
+    dataset = np.asarray(dataset).astype(np.float32)
+    labels = map(lambda x: np.int32(x), labels)
+    labels = map(lambda x: one_hot_encoder(x, 10), labels)
+    return dataset, labels
+
+
+def accuracy(predictions, labels):
+    return 100.0 * np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1)) / predictions.shape[0]
+
+
+def get_nn_4layer(dSet, use_dropout):
+    input_to_layer1 = tf.matmul(dSet, weights_layer1) + biases_layer1
+    hidden_layer1_output = tf.nn.relu(input_to_layer1)
+
+    logits_hidden1 = None
+    if use_dropout:
+        dropout_hidden1 = tf.nn.dropout(hidden_layer1_output, keep_prob)
+        logits_hidden1 = tf.matmul(dropout_hidden1, weights_layer2) + biases_layer2
+    else:
+        logits_hidden1 = tf.matmul(hidden_layer1_output, weights_layer2) + biases_layer2
+
+    hidden_layer2_output = tf.nn.relu(logits_hidden1)
+
+    logits_hidden2 = None
+    if use_dropout:
+        dropout_hidden2 = tf.nn.dropout(hidden_layer2_output, keep_prob)
+        logits_hidden2 = tf.matmul(dropout_hidden2, weights_layer3) + biases_layer3
+    else:
+        logits_hidden2 = tf.matmul(hidden_layer2_output, weights_layer3) + biases_layer3
+
+    hidden_layer3_output = tf.nn.relu(logits_hidden2)
+    logits_hidden3 = None
+    if use_dropout:
+        dropout_hidden3 = tf.nn.dropout(hidden_layer3_output, keep_prob)
+        logits_hidden3 = tf.matmul(dropout_hidden3, weights_layer4) + biases_layer4
+    else:
+        logits_hidden3 = tf.matmul(hidden_layer3_output, weights_layer4) + biases_layer4
+
+    hidden_layer4_output = tf.nn.relu(logits_hidden3)
+    logits = None
+    if use_dropout:
+        dropout_hidden4 = tf.nn.dropout(hidden_layer4_output, keep_prob)
+        logits = tf.matmul(dropout_hidden4, weights) + biases
+    else:
+        logits = tf.matmul(hidden_layer4_output, weights) + biases
+
+    return logits
+
+
+with open('neuralnet/data/gztan.pickle', 'rb') as f:
     save = pickle.load(f)
     train_dataset_xs = save['train_dataset_xs']
     train_dataset_y = save['train_dataset_y']
@@ -22,57 +73,13 @@ with open('data/gztan.pickle', 'rb') as f:
     mappings = save['mappings']
     del save  # gc
 
-def oneHotEncoder(pos, max):
-    encoded = []
-    for i in range(0, max):
-        if i == pos:
-            encoded.append(1)
-        else:
-            encoded.append(0)
-    return encoded
-def reformat(dataset, labels):
-    dataset = np.asarray(dataset).astype(np.float32)
-    labels = map(lambda x: np.int32(x), labels)
-    labels = map(lambda x: oneHotEncoder(x, 10), labels)
-    return dataset, labels
-
 train_dataset, train_labels = reformat(train_dataset_xs, train_dataset_y)
 test_dataset, test_labels = reformat(test_dataset_xs, test_dataset_y)
-print(train_dataset.shape)
-
-%matplotlib inline  
-
-plt.plot(train_dataset[0,2:])
-plt.show()
-
-plt.plot(train_dataset[100,2:])
-plt.show()
-
-plt.plot(train_dataset[200,2:])
-plt.show()
-
-plt.plot(train_dataset[:,0])
-plt.show()
-
-plt.plot(train_dataset[:,100])
-plt.show()
-
-plt.plot(train_dataset[:,120])
-plt.show()
 
 mu = train_dataset.mean(axis=0)
 sigma = train_dataset.std(axis=0)
 train_dataset_scaled = (train_dataset - mu) / sigma
 test_dataset_scaled = (test_dataset - mu) / sigma
-
-plt.plot(train_dataset_scaled[0,:])
-plt.show()
-
-plt.plot(train_dataset_scaled[:,0])
-plt.show()
-
-def accuracy(predictions, labels):
-    return (100.0 * np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1)) / predictions.shape[0])
 
 batch_size = 128
 num_labels = 10
@@ -108,46 +115,8 @@ with graph.as_default():
     weights = tf.Variable(tf.truncated_normal([hidden_lastlayer_size, num_labels], stddev=0.1))
     biases = tf.Variable(tf.zeros([num_labels]))
 
-    def getNN4Layer(dSet, use_dropout):
-        input_to_layer1 = tf.matmul(dSet, weights_layer1) + biases_layer1
-        hidden_layer1_output = tf.nn.relu(input_to_layer1)
-
-        logits_hidden1 = None
-        if use_dropout:
-            dropout_hidden1 = tf.nn.dropout(hidden_layer1_output, keep_prob)
-            logits_hidden1 = tf.matmul(dropout_hidden1, weights_layer2) + biases_layer2
-        else:
-            logits_hidden1 = tf.matmul(hidden_layer1_output, weights_layer2) + biases_layer2
-
-        hidden_layer2_output = tf.nn.relu(logits_hidden1)
-
-        logits_hidden2 = None
-        if use_dropout:
-            dropout_hidden2 = tf.nn.dropout(hidden_layer2_output, keep_prob)
-            logits_hidden2 = tf.matmul(dropout_hidden2, weights_layer3) + biases_layer3
-        else:
-            logits_hidden2 = tf.matmul(hidden_layer2_output, weights_layer3) + biases_layer3
-
-        hidden_layer3_output = tf.nn.relu(logits_hidden2)
-        logits_hidden3 = None
-        if use_dropout:
-            dropout_hidden3 = tf.nn.dropout(hidden_layer3_output, keep_prob)
-            logits_hidden3 = tf.matmul(dropout_hidden3, weights_layer4) + biases_layer4
-        else:
-            logits_hidden3 = tf.matmul(hidden_layer3_output, weights_layer4) + biases_layer4
-
-        hidden_layer4_output = tf.nn.relu(logits_hidden3)
-        logits = None
-        if use_dropout:
-            dropout_hidden4 = tf.nn.dropout(hidden_layer4_output, keep_prob)
-            logits = tf.matmul(dropout_hidden4, weights) + biases
-        else:
-            logits = tf.matmul(hidden_layer4_output, weights) + biases
-
-        return logits
-
-    logits = getNN4Layer(tf_train_dataset, True)
-    logits_test = getNN4Layer(tf_test_dataset, False)
+    logits = get_nn_4layer(tf_train_dataset, True)
+    logits_test = get_nn_4layer(tf_test_dataset, False)
 
     loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits, tf_train_labels))
 
@@ -159,7 +128,9 @@ with graph.as_default():
     test_prediction = tf.nn.softmax(logits_test)
 
     num_steps = 1001
-    
+
+    saver = tf.train.Saver()
+
     with tf.Session(graph=graph) as session:
         tf.initialize_all_variables().run()
         print("Initialized")
@@ -170,11 +141,9 @@ with graph.as_default():
 
             feed_dict = {tf_train_dataset: batch_data, tf_train_labels: batch_labels, keep_prob: 0.7}
             _, l, predictions = session.run([optimizer, loss, train_prediction], feed_dict=feed_dict)
-            if (step % 100 == 0):
-                print("Minibatch loss at step", step, ":", l)
-#                 print("Minibatch accuracy: %.1f%%" % accuracy(train_prediction.eval(
-#                     feed_dict={tf_train_dataset: batch_data, tf_train_labels: batch_labels, keep_prob: 1.0}),
-#                                                               batch_labels))
+
         results = test_prediction.eval(feed_dict={keep_prob: 1.0})
         print("Test accuracy: %.1f%%" % accuracy(results, test_labels))
-        
+        model_path = "neuralnet/model.ckpt"
+        save_path = saver.save(session, model_path)
+        print("Model saved at " + model_path)
