@@ -2,4 +2,7 @@ node_modules
 bower_components
 .idea/
 .vscode
-genres
+audio_parser/data
+*ckpt*
+*_vars.pickle
+checkpoint
