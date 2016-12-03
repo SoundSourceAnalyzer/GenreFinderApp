@@ -34,23 +34,11 @@ class FeatureExtractor:
         self.harmonic_spectral_deviation = None
         self.harmonic_spectral_spread = None
         self.harmonic_spectral_variation = None
-        self.audio_fundamental_frequency_avg = None
-        self.audio_fundamental_frequency_var = None
         self.harmonic_ratio_avg = None
         self.harmonic_ratio_var = None
         self.upper_limit_harmonicity_avg = None
         self.upper_limit_harmonicity_var = None
-        self.audio_power_avg = None
-        self.audio_power_var = None
-        self.asp_per_band_avg = []
-        self.asp_avg = None
-        self.asp_per_band_var = []
-        self.asp_var_avg = None
         self.log_attack_time = None
-        self.sb_per_band_avg = []
-        self.sb_avg = None
-        self.sb_per_band_var = []
-        self.sb_var_avg = None
         self.fv = []
         self.extract_features()
         self.export_features()
@@ -75,19 +63,7 @@ class FeatureExtractor:
         self.fv.append(self.harmonic_spectral_deviation)
         self.fv.append(self.harmonic_spectral_spread)
         self.fv.append(self.harmonic_spectral_variation)
-        self.fv.append(self.audio_fundamental_frequency_avg)
-        self.fv.append(self.audio_fundamental_frequency_var)
-        self.fv.append(self.audio_power_avg)
-        self.fv.append(self.audio_power_var)
-        self.fv.extend(self.asp_per_band_avg)
-        self.fv.append(self.asp_avg)
-        self.fv.extend(self.asp_per_band_var)
-        self.fv.append(self.asp_var_avg)
         self.fv.append(self.log_attack_time)
-        self.fv.extend(self.sb_per_band_avg)
-        self.fv.append(self.sb_avg)
-        self.fv.extend(self.sb_per_band_var)
-        self.fv.append(self.sb_var_avg)
 
     def extract_features(self):
         if os.path.exists(self.audiofile):
@@ -145,12 +121,6 @@ class FeatureExtractor:
         self.spread_avg = np.mean(audio_spectrum_spread_values)
         self.spread_var = np.var(audio_spectrum_spread_values)
 
-        audio_fundamental_frequency_values = self.parse_xml_vector(root,
-                                                                   ".//mpeg7:AudioDescriptor[@xsi:type='AudioFundamentalFrequencyType']",
-                                                                   ns)
-        self.audio_fundamental_frequency_avg = np.mean(audio_fundamental_frequency_values)
-        self.audio_fundamental_frequency_var = np.var(audio_fundamental_frequency_values)
-
         harmonic_ratio_values = self.parse_xml_vector(root, ".//mpeg7:HarmonicRatio", ns)
         self.harmonic_ratio_avg = np.mean(harmonic_ratio_values)
         self.harmonic_ratio_var = np.var(harmonic_ratio_values)
@@ -158,10 +128,6 @@ class FeatureExtractor:
         upper_limit_harmonicity_values = self.parse_xml_vector(root, ".//mpeg7:UpperLimitOfHarmonicity", ns)
         self.upper_limit_harmonicity_avg = np.mean(upper_limit_harmonicity_values)
         self.upper_limit_harmonicity_var = np.var(upper_limit_harmonicity_values)
-
-        audio_power_values = self.parse_xml_vector(root, ".//mpeg7:AudioDescriptor[@xsi:type='AudioPowerType']", ns)
-        self.audio_power_avg = np.mean(audio_power_values)
-        self.audio_power_var = np.var(audio_power_values)
 
     def extract_matrix_features(self, root, ns):
         envelope_values = self.parse_2d_xml_vector(root,
@@ -179,19 +145,6 @@ class FeatureExtractor:
         self.sfm_avg = np.mean(self.sfm_per_band_avg)
         self.sfm_per_band_var = [np.var(band) for band in flatness_values]
         self.sfm_var_avg = np.mean(self.sfm_per_band_var)
-
-        asp_values = self.parse_2d_xml_vector(root, ".//mpeg7:AudioDescriptor[@xsi:type='AudioSpectrumProjectionType']",
-                                              ns)
-        self.asp_per_band_avg = [np.mean(band) for band in asp_values]
-        self.asp_avg = np.mean(self.asp_per_band_avg)
-        self.asp_per_band_var = [np.var(band) for band in asp_values]
-        self.asp_var_avg = np.mean(self.asp_per_band_var)
-
-        sb_values = self.parse_2d_xml_vector(root, ".//mpeg7:SpectrumBasis", ns)
-        self.sb_per_band_avg = [np.mean(band) for band in sb_values]
-        self.sb_avg = np.mean(self.sb_per_band_avg)
-        self.sb_per_band_var = [np.var(band) for band in sb_values]
-        self.sb_var_avg = np.mean(self.sb_per_band_var)
 
     def parse_xml_scalar(self, root, xml_selector, ns):
         element = root.find(xml_selector, ns)
@@ -225,7 +178,3 @@ class FeatureExtractor:
 
     def get_features(self):
         return self.fv
-
-
-
-

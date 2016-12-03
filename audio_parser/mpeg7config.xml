@@ -25,10 +25,9 @@
     <Module xsi:type="AudioHarmonicity" mp7ae:enable="true"/>
     <Module xsi:type="AudioPower" mp7ae:enable="true"/>
     <Module xsi:type="AudioWaveform" mp7ae:enable="true" />
-    <Module xsi:type="AudioSpectrumBasisProjection" mp7ae:enable="true"/>
     <Module xsi:type="LogAttackTime" mp7ae:enable="true" />
-    <Module xsi:type="SoundModel" mp7ae:enable="true" />
-
-    <!--to add-->
-    <!--<Module xsi:type="AudioSignature" mp7ae:enable="true" />-->
+    
+    <!-- <Module xsi:type="SoundModel" mp7ae:enable="true" />
+    <Module xsi:type="AudioSpectrumBasisProjection" mp7ae:enable="true"/>
+    <Module xsi:type="AudioSignature" mp7ae:enable="true" /> -->
 </Config>
