@@ -1,7 +1,12 @@
-# featureExtractor = FeatureExtractor('/notebooks/genres/blues/blues.00000.au')
-# featureExtractor.extract_features()
-# featureExtractor.export_features()
-# print(len(featureExtractor.fv))
+from parser import FeatureExtractor
+
+featureExtractor = FeatureExtractor('rock_sample.au')
+featureExtractor.extract_features()
+print ("Extraction complete")
+featureExtractor.export_features()
+print(len(featureExtractor.fv))
+
+
 #
 # root = os.path.join(os.getcwd(), 'genres')
 #

@@ -1,3 +1,4 @@
+# coding=utf-8
 from __future__ import print_function
 import os
 import numpy as np
@@ -5,7 +6,6 @@ import sys
 import subprocess
 import tarfile
 import xml.etree.ElementTree as ET
-from IPython.display import display, Image
 from scipy import ndimage
 from six.moves.urllib.request import urlretrieve
 from six.moves import cPickle as pickle
@@ -104,7 +104,9 @@ class FeatureExtractor:
               'xsi': 'http://www.w3.org/2001/XMLSchema-instance',
               'xsi:schemaLocation': 'urn:mpeg:mpeg7:schema:2001 http://mpeg7audioenc.sourceforge.net/mpeg7audioenc.xsd'}
 
+        print("waiting for result")
         result = subprocess.check_output(['java', '-jar', 'MPEG7AudioEnc.jar', self.audiofile, 'mpeg7config.xml'])
+        print("result is here")
         root = ET.fromstring(result)
 
         self.extract_scalar_features(root, ns)
