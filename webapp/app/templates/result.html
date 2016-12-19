@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <header>
+        <div class="container">
+            <div class="row">
+                <div class="col-sm-12">
+                    <div class="header-content">
+                        <div class="header-content-inner inline" id="main-content">
+                            <h1>Your genre is: {{ genre }}</h1>
+                            <form id="classify-form" enctype="multipart/form-data" role="searchForm" method="post"
+                                  action="{{ url_for('upload') }}">
+                                <span>
+                                    <label class="btn btn-outline" for="upload-song">Try another one</label>
+                                    <input type="file" name="file" id="upload-song"/>
+                                </span>
+                            </form>
+                            <form id="retry-form" enctype="multipart/form-data" method="post" action="{{ url_for('upload') }}">
+                                <span>
+                                    <label class="btn btn-outline" id="features">Try again</label>
+                                    <input type="hidden" name="features"  value="{{ features }}"/>
+                                </span>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+{% endblock %}
+
+{% block javascript %}
+    <script type="application/javascript">
+
+        document.getElementById("upload-song").onchange = function () {
+            document.getElementById("classify-form").submit();
+        };
+
+        document.getElementById("features").onclick = function () {
+            document.getElementById("retry-form").submit();
+        };
+
+
+    </script>
+{% endblock %}

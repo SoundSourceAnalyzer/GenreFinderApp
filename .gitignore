@@ -6,3 +6,8 @@ audio_parser/data
 *ckpt*
 *_vars.pickle
 checkpoint
+neuralnet/data/uploaded
+neuralnet/data/model
+neuralnet/data/genres
+features
+ipynb_checkpoint

@@ -2,6 +2,7 @@ from __future__ import print_function
 import numpy as np
 import pickle
 import tensorflow as tf
+import os
 
 
 def accuracy(predictions, labels):
@@ -18,10 +19,25 @@ def one_hot_encoder(pos, max):
     return encoded
 
 
-def reformat(dataset, labels):
+def randomize(dataset_xs, dataset_y):
+    permutation = np.random.permutation(len(dataset_y))
+    shuffled_dataset_xs = np.asarray(dataset_xs)[permutation]
+    shuffled_dataset_y = np.asarray(dataset_y)[permutation]
+    return shuffled_dataset_xs, shuffled_dataset_y
+
+
+def evens(dataset):
+    return dataset[::2]
+
+
+def odds(dataset):
+    return dataset[1::2]
+
+
+def reformat(dataset, labels, count):
     dataset = np.asarray(dataset).astype(np.float32)
     labels = map(lambda x: np.int32(x), labels)
-    labels = map(lambda x: one_hot_encoder(x, 10), labels)
+    labels = map(lambda x: one_hot_encoder(x, count), labels)
     return dataset, labels
 
 
@@ -54,6 +70,11 @@ class NeuralNetModel:
         self.weights = None
         self.biases = None
         self.keep_prob = None
+
+        self.session = None
+        self.saver = None
+        self.tf_train_dataset = None
+        self.tf_train_labels = None
 
     def init_weights_and_biases(self, num_features, num_labels):
         self.weights_layer1 = tf.Variable(tf.truncated_normal([num_features, self.hidden_layer1_size], stddev=0.05))
@@ -109,29 +130,40 @@ class NeuralNetModel:
 
         return logits
 
-    def train_gztan(self):
-        with open('neuralnet/data/gztan.pickle', 'rb') as f:
+    def train_gztan_raw(self):
+
+        CURRENT_DIR = os.path.dirname(__file__)
+        gztan_raw_path = os.path.join(CURRENT_DIR, 'data/gztan_raw.pickle')
+        gztan_vars_path = os.path.join(CURRENT_DIR, 'data/model/gztan_raw_vars.pickle')
+
+        with open(gztan_raw_path, 'rb') as f:
             save = pickle.load(f)
-            train_dataset_xs = save['train_dataset_xs']
-            train_dataset_y = save['train_dataset_y']
-            test_dataset_xs = save['test_dataset_xs']
-            test_dataset_y = save['test_dataset_y']
-            mappings = save['mappings']
+            dataset_xs = save['dataset_xs']
+            dataset_y = save['dataset_y']
             del save  # gc
 
-        train_dataset, train_labels = reformat(train_dataset_xs, train_dataset_y)
-        test_dataset, test_labels = reformat(test_dataset_xs, test_dataset_y)
+        train_dataset_xs = evens(dataset_xs)
+        train_dataset_y = evens(dataset_y)
+        test_dataset_xs = odds(dataset_xs)
+        test_dataset_y = odds(dataset_y)
+
+        train_dataset_xs, train_dataset_y = randomize(train_dataset_xs, train_dataset_y)
+        test_dataset_xs, test_dataset_y = randomize(test_dataset_xs, test_dataset_y)
+
+        train_dataset, train_labels = reformat(train_dataset_xs, train_dataset_y, 10)
+        test_dataset, test_labels = reformat(test_dataset_xs, test_dataset_y, 10)
 
         mu = train_dataset.mean(axis=0)
         sigma = train_dataset.std(axis=0)
 
-        with open('neuralnet/model/gztan_vars.pickle', 'wb') as handle:
+        with open(gztan_vars_path, 'wb') as handle:
             pickle.dump([mu, sigma], handle)
 
         train_dataset_scaled = (train_dataset - mu) / sigma
         test_dataset_scaled = (test_dataset - mu) / sigma
 
-        return self.train(NetworkParams("gztan", 140, 10, train_dataset_scaled, test_dataset_scaled, train_labels, test_labels))
+        return self.train(
+            NetworkParams("gztan_raw", 145, 10, train_dataset_scaled, test_dataset_scaled, train_labels, test_labels))
 
     def train(self, network_params):
         self.init_weights_and_biases(network_params.num_features, network_params.num_labels)
@@ -167,42 +199,46 @@ class NeuralNetModel:
 
             results = test_prediction.eval(feed_dict={self.keep_prob: 1.0})
             print("Test accuracy: %.1f%%" % accuracy(results, network_params.test_labels))
-            model_path = "neuralnet/model/" + network_params.model_name + "_model.ckpt"
+
+            model_path = os.path.join(os.path.dirname(__file__),
+                                      'data/model/' + network_params.model_name + "_model.ckpt")
             saver.save(session, model_path)
             print("Model saved at " + model_path)
 
     def predict_gztan(self, feature_array):
 
-        with open('neuralnet/model/gztan_vars.pickle', 'rb') as handle:
+        gztan_raw_path = os.path.join(os.path.dirname(__file__), 'data/gztan_raw.pickle')
+
+        with open(gztan_raw_path, 'rb') as f:
+            save = pickle.load(f)
+            mappings = save['mappings']
+            del save  # gc
+
+        with open('/app/neuralnet/data/model/gztan_raw_vars.pickle', 'rb') as handle:
             mu, sigma = pickle.load(handle)
-            print(mu.size, sigma.size)
 
-        # train_dataset_scaled = (train_dataset - mu) / sigma
-        # test_dataset_scaled = (test_dataset - mu) / sigma
-
-        num_features = 140
+        num_features = 145
         num_labels = 10
 
         self.init_weights_and_biases(num_features, num_labels)
-        tf_train_dataset = tf.placeholder(tf.float32, shape=(1, num_features))
-        tf_train_labels = tf.placeholder(tf.float32, shape=(1, num_labels))
+        self.tf_train_dataset = tf.placeholder(tf.float32, shape=(1, num_features))
+        self.tf_train_labels = tf.placeholder(tf.float32, shape=(1, num_labels))
 
-        saver = tf.train.Saver()
-        model_path = "neuralnet/model/gztan_model.ckpt"
+        self.saver = tf.train.Saver(tf.all_variables())
+        model_path = os.path.join(os.path.dirname(__file__), 'data/model/gztan_raw_model.ckpt')
 
-        with tf.Session() as session:
-            saver.restore(session, model_path)
-            print("Model restored")
+        with tf.Session() as self.session:
+            self.saver.restore(self.session, model_path)
 
             new = np.reshape(feature_array, (1, num_features))
+            new = np.asarray(new).astype(np.float32)
+            new = (new - mu) / sigma
             label = np.zeros((1, num_labels))
 
-            keep_prob = tf.placeholder(tf.float32)
-            feed_dict = {tf_train_dataset: new, tf_train_labels: label, keep_prob: 0.7}
-            logits = self.get_nn_4layer(tf_train_dataset, True)
-            print(session.run(logits, feed_dict=feed_dict))
+            feed_dict = {self.tf_train_dataset: new, self.tf_train_labels: label, self.keep_prob: 0.7}
+            logits = self.get_nn_4layer(self.tf_train_dataset, True)
+            predictions = self.session.run(logits, feed_dict=feed_dict)
+            genre = (mappings[np.argmax(predictions, 1).item(0)])
 
-
-model = NeuralNetModel()
-model.train_gztan()
-# model.predict_gztan()
+        tf.reset_default_graph()
+        return genre

@@ -1,12 +1,12 @@
 from flask import Flask, request, redirect, url_for, flash, render_template
-import tensorflow as tf
 import os
 from app import app
-from app.forms import SearchForm
+from app.forms import SearchForm, RetryForm
+import json
 from werkzeug.utils import secure_filename
 
-# from audio_parser.parser import FeatureExtractor
-
+from neuralnet.model import NeuralNetModel
+from neuralnet.parser import FeatureExtractor
 
 ALLOWED_EXTENSIONS = set(['mp3'])
 
@@ -21,7 +21,6 @@ def allowed_file(filename):
 
 
 @app.route('/', methods=['GET'])
-@app.route('/index', methods=['GET'])
 def index():
     form = SearchForm()
     if form.validate_on_submit():
@@ -31,22 +30,32 @@ def index():
     return render_template('index.html', form=form)
 
 
-@app.route('/', methods=['POST'])
-@app.route('/index', methods=['POST'])
+@app.route('/upload', methods=['POST'])
 def upload():
-    if request.method == 'POST':
-        # check if the post request has the file part
-        if 'file' not in request.files:
-            flash('No file part')
-            return render_template('loading.html')
+    if 'file' in request.files:
         file = request.files['file']
         print(file)
-        if file:
-            filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            # return redirect(url_for('uploaded_file',filename=filename))
-            return render_template('loading.html')
-        return render_template('loading.html')
+        filename = secure_filename(file.filename)
+        filepath = os.path.join('/app/webapp/app/uploaded', filename)
+        file.save(filepath)
+        features = FeatureExtractor(filepath).fv
+        model = NeuralNetModel()
+        genre = model.predict_gztan(features)
+        del model
+        return render_template('result.html', features=json.dumps(features), genre=genre)
+    else:
+        features = json.loads(request.form['features'])
+        print(features)
+        print(type(features))
+        model = NeuralNetModel()
+        genre = model.predict_gztan(features)
+        del model
+        return render_template('result.html', features=features, genre=genre)
+
+
+    # check if the post request has the file part
+
+
 
 def flash_errors(form):
     for field, errors in form.errors.items():
